@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pendel Simulation</title>
+<style>
+body { font-family: Arial; margin:0; background:linear-gradient(180deg,#e6f4f7,#f8fcff); color:#033; }
+header { background:#0b5394; color:white; padding:20px; text-align:center; }
+section { padding:20px; margin:10px; background:white; border-radius:12px; box-shadow:0 0 12px rgba(0,0,0,0.08);} 
+h2 { color:#0b5394; }
+.controls input { width:100%; }
+canvas { background:#f0f8ff; display:block; margin:auto; border-radius:10px; }
+button { padding:10px; margin-top:10px; background:#0b5394; color:white; border:none; border-radius:6px; cursor:pointer; }
+button:hover { background:#073763; }
+</style>
+</head>
+<body>
+
+<header>
+<h1>Schwingungsdauer eines Pendels ⚙️</h1>
+<p>Lernen • Verstehen • Ausprobieren</p>
+</header>
+
+<section>
+<h2>📘 Theorie</h2>
+<p><b>Was ist ein Pendel?</b><br>Ein aufgehängter Körper, der schwingt.</p>
+<p><b>Schwingungsdauer:</b> Zeit für eine komplette Bewegung.</p>
+<p><b>Formel:</b> T = 2π √(L/g)</p>
+<p><b>Wichtig:</b> Die Masse hat keinen Einfluss.</p>
+</section>
+
+<section>
+<h2>🎯 Simulation</h2>
+<canvas id="pendulum" width="300" height="300"></canvas>
+
+<div class="controls">
+<label>Länge (m): <input type="range" id="length" min="0.2" max="2" step="0.1" value="1"></label>
+<label>Masse (kg): <input type="range" id="mass" min="0.1" max="5" step="0.1" value="1"></label>
+<label>Winkel (°): <input type="range" id="angle" min="5" max="45" value="20"></label>
+</div>
+
+<p id="period"></p>
+</section>
+
+<section>
+<h2>🧪 Praxis / Experiment</h2>
+<p>Baue ein echtes Pendel und vergleiche es mit der Simulation!</p>
+<canvas id="expPendulum" width="300" height="300"></canvas>
+<p>👉 Beobachte: Länge beeinflusst die Geschwindigkeit, Masse nicht.</p>
+</section>
+
+<section>
+<h2>🧠 Quiz</h2>
+<div id="quiz"></div>
+<button onclick="checkQuiz()">Auswerten</button>
+<p id="result"></p>
+</section>
+
+<script>
+const canvas = document.getElementById("pendulum");
+const ctx = canvas.getContext("2d");
+
+const expCanvas = document.getElementById("expPendulum");
+const expCtx = expCanvas.getContext("2d");
+
+let t = 0;
+
+function getValues(){
+ return {
+  L: parseFloat(document.getElementById("length").value),
+  angle: parseFloat(document.getElementById("angle").value) * Math.PI/180,
+  g: 9.81
+ };
+}
+
+function drawPendulum(context, centerX, topY, scale){
+ let {L, angle, g} = getValues();
+ let T = 2*Math.PI*Math.sqrt(L/g);
+ document.getElementById("period").innerText = "Schwingungsdauer: " + T.toFixed(2) + " s";
+
+ let theta = angle * Math.cos((2*Math.PI/T)*t);
+ let lengthPx = L * scale;
+ let x = centerX + Math.sin(theta)*lengthPx;
+ let y = topY + Math.cos(theta)*lengthPx;
+
+ context.clearRect(0,0,300,300);
+
+ // Faden
+ context.beginPath();
+ context.moveTo(centerX, topY);
+ context.lineTo(x,y);
+ context.stroke();
+
+ // Masse
+ context.beginPath();
+ context.arc(x,y,10,0,Math.PI*2);
+ context.fillStyle = "#0b5394";
+ context.fill();
+
+ // Aufhängung
+ context.beginPath();
+ context.arc(centerX, topY, 4,0,Math.PI*2);
+ context.fillStyle = "black";
+ context.fill();
+}
+
+function animate(){
+ drawPendulum(ctx,150,40,120);
+ drawPendulum(expCtx,150,40,120);
+ t += 0.02;
+ requestAnimationFrame(animate);
+}
+animate();
+
+// Quiz mit mehr Fragen
+const questions = [
+ {q:"Wovon hängt die Schwingungsdauer ab?", a:["Masse","Länge","Farbe"], correct:1},
+ {q:"Hat die Masse Einfluss?", a:["Ja","Nein"], correct:1},
+ {q:"Welche Größe ist konstant?", a:["g","m","Farbe"], correct:0},
+ {q:"Ein längeres Pendel schwingt...", a:["schneller","langsamer"], correct:1},
+ {q:"Ein kürzeres Pendel schwingt...", a:["langsamer","schneller"], correct:1},
+ {q:"Formel enthält?", a:["L","Farbe","Temperatur"], correct:0}
+];
+
+const quizDiv = document.getElementById("quiz");
+questions.forEach((q,i)=>{
+ let html = `<p>${q.q}</p>`;
+ q.a.forEach((opt,j)=>{
+  html += `<label><input type="radio" name="q${i}" value="${j}">${opt}</label><br>`;
+ });
+ quizDiv.innerHTML += html;
+});
+
+function checkQuiz(){
+ let score=0;
+ questions.forEach((q,i)=>{
+ let val = document.querySelector(`input[name=q${i}]:checked`);
+ if(val && val.value==q.correct) score++;
+ });
+ document.getElementById("result").innerText = "Punkte: " + score + "/" + questions.length;
+}
+</script>
+
+</body>
+</html>
