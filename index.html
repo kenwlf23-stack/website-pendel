@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+html{scroll-behavior:smooth;}
+
+body{
+ margin:0;
+ font-family:sans-serif;
+ background:#f0f8ff; /* Heller Hintergrund */
+ color:rgba(84, 9, 206, 0.445)6;       /* Dunkle Schrift für guten Kontrast */
+}
+
+header{
+ text-align:center;
+ padding:40px;
+}
+
+h1{
+ font-size:2.8em;
+ color:#0066cc;
+ text-shadow:0 0 10px #66ccff;
+}
+
+.nav a{
+ color:#0066cc;
+ margin:0 10px;
+ text-decoration:none;
+}
+
+.section{
+ max-width:900px;
+ margin:30px auto;
+ padding:20px;
+ background:#e6f2ff; /* Heller Hintergrund für Sektionen */
+ border:1px solid #99ccff;
+ border-radius:15px;
+ box-shadow:0 0 15px rgba(84, 9, 206, 0.445);
+}
+
+.slider-box{
+ margin:10px 0;
+}
+
+input[type=range]{
+ width:100%;
+}
+
+.value{
+ font-size:0.9em;
+ color:#0066cc;
+}
+
+canvas{
+ display:block;
+ margin:auto;
+ background:#ffffff;
+ border:1px solid #0066cc;
+ border-radius:10px;
+ width:90%;         /* passt sich dem Bildschirm an */
+ max-width:350px;    /* maximal wie vorher */
+ aspect-ratio:1/1;   /* immer quadratisch */
+}
+
+button{
+ width:100%;
+ padding:12px;
+ font-size:1em;
+ background:#0066cc;
+ color:white;
+ border:none;
+ border-radius:8px;
+ margin-top:10px;
+ cursor:pointer;
+}
+
+textarea{
+ width:100%;
+ padding:0;
+ font-size:1em;       /* gleiche Größe wie Button */
+ border-radius:8px;
+ border:1px solid #0066cc;
+ resize:none;
+ height:44px;          /* gleiche Höhe wie Button */
+ box-sizing:border-box;
+}
+
+.star{font-size:30px;color:gray;cursor:pointer;}
+.star.active{color:gold;}
+</style>
+</head>
+
+<body>
+<header>
+<h1>Pendel Lern Website</h1>
+<div class="nav">
+<a href="#theorie">• Theorie</a>
+<a href="#sim">• Simulation</a>
+<a href="#video">• Video</a>
+<a href="#quiz">• Quiz</a>
+<a href="#feedback">• Feedback</a>
+</div>
+</header>
+
+<div id="theorie" class="section">
+<h2>📘 Theorie</h2>
+<p>Ein Pendel ist ein Körper, der an einem Faden aufgehängt ist und durch die Schwerkraft schwingt.</p>
+<p><b>Schwingungsdauer (T):</b> Zeit für eine vollständige Bewegung.</p>
+<p><b>Formel:</b> T = 2π √(L/g)</p>
+<p><b>Wichtig:</b> Die Masse hat keinen Einfluss auf die Schwingungsdauer.</p>
+</div>
+
+<div id="sim" class="section">
+<h2>🎯 Simulation</h2>
+<canvas id="c" width="350" height="350"></canvas>
+
+<div class="slider-box">
+Länge: <span id="vL" class="value"></span>
+<input type="range" id="L" min="0.2" max="2" step="0.1">
+</div>
+
+<div class="slider-box">
+Winkel: <span id="vA" class="value"></span>
+<input type="range" id="A" min="5" max="60">
+</div>
+
+<div class="slider-box">
+Masse: <span id="vM" class="value"></span>
+<input type="range" id="M" min="1" max="5">
+</div>
+
+<p id="T"></p>
+</div>
+
+<div id="video" class="section">
+<h2>🎥 Erklär Video</h2>
+<video width="100%" controls>
+<source src="video.mp4" type="video/mp4">
+</video>
+<p style="font-size:0.8em;">
+Quelle: ZDF / Terra X plus / Bilderfest / Tillman Graach / Benjamin Herzberger / Moritz Krause / Phillip Becker / Maximilian Heß<br>
+CC BY 4.0<br>
+https://wirtschaftsphysik.de/cms/wp-content/uploads/2017/11/ap1_v01.pdf
+</p>
+</div>
+
+<div id="quiz" class="section">
+<h2>🧠 Quiz</h2>
+<div id="q"></div>
+<button onclick="checkQuiz()">Auswerten</button>
+<p id="res"></p>
+</div>
+
+<div id="feedback" class="section">
+<h2>⭐ Feedback</h2>
+<div id="stars">
+<span class="star" onclick="rate(1)">★</span>
+<span class="star" onclick="rate(2)">★</span>
+<span class="star" onclick="rate(3)">★</span>
+<span class="star" onclick="rate(4)">★</span>
+<span class="star" onclick="rate(5)">★</span>
+</div>
+<textarea id="msg" placeholder="Dein Feedback..."></textarea>
+<button onclick="submitFeedback()">Senden</button>
+
+<p id="avg"></p>
+<div id="all"></div>
+</div>
+
+<script>
+// Simulation
+const ctx=c.getContext("2d");
+let t=0;
+
+function vals(){
+ return {L:+L.value,A:+A.value*Math.PI/180,g:9.81,M:+M.value};
+}
+
+function draw(){
+ let {L,A,g,M}=vals();
+ let T=2*Math.PI*Math.sqrt(L/g);
+ document.getElementById("T").innerText="T="+T.toFixed(2)+"s";
+
+ let th=A*Math.cos((2*Math.PI/T)*t);
+
+ let w = c.width/2;
+ let h = c.height/4;
+ let scale = c.width/2.5; // Pendel passt in Canvas, auch auf Handy
+
+ let x=w+Math.sin(th)*L*scale;
+ let y=h+Math.cos(th)*L*scale;
+
+ ctx.clearRect(0,0,c.width,c.height);
+
+ ctx.beginPath();
+ ctx.moveTo(w,h);
+ ctx.lineTo(x,y);
+ ctx.strokeStyle="#0066cc";
+ ctx.lineWidth=2;
+ ctx.stroke();
+
+ ctx.beginPath();
+ ctx.arc(x,y,5+M*3,0,Math.PI*2);
+ ctx.fillStyle="#0066cc";
+ ctx.fill();
+}
+
+function loop(){draw();t+=0.02;requestAnimationFrame(loop);}
+loop();
+
+// Quiz
+const qs=[
+["Wovon hängt T ab?",["Masse","Länge","Farbe"],1],
+["Masse Einfluss?",["Ja","Nein","Manchmal"],1],
+["g?",["9.81","5","20"],0],
+["Länger = ?",["langsamer","schneller","gleich"],0],
+["Formel?",["√L","L²","1/L"],0],
+["Einheit L?",["m","s","kg"],0],
+["Einheit Zeit?",["s","m","kg"],0],
+["Winkel Einfluss?",["kaum","stark","gar nicht"],0]
+];
+
+qs.forEach((q,i)=>{
+ let h=`<p>${q[0]}</p>`;
+ q[1].forEach((o,j)=>{
+  h+=`<input type="radio" name="q${i}" value="${j}">${o}<br>`;
+ });
+ document.getElementById("q").innerHTML+=h;
+});
+
+function checkQuiz(){
+ let s=0;
+ qs.forEach((q,i)=>{
+ let v=document.querySelector(`input[name=q${i}]:checked`);
+ if(v&&v.value==q[2])s++;
+ });
+ res.innerText="Score: "+s+"/"+qs.length;
+}
+
+// Feedback
+let selected=0;
+
+function rate(v){
+ selected=v;
+ document.querySelectorAll(".star").forEach((s,i)=>{
+  s.classList.toggle("active",i<v);
+ });
+}
+
+function submitFeedback(){
+ let data=JSON.parse(localStorage.getItem("fb")||"[]");
+ let last=localStorage.getItem("last");
+
+ if(last && Date.now()-last<1800000){
+  alert("Bitte 30 Minuten warten");
+  return;
+ }
+
+ data.push({stars:selected,text:msg.value});
+ localStorage.setItem("fb",JSON.stringify(data));
+ localStorage.setItem("last",Date.now());
+
+ render();
+}
+
+function render(){
+ let data=JSON.parse(localStorage.getItem("fb")||"[]");
+
+ if(data.length===0)return;
+
+ let avgScore=data.reduce((a,b)=>a+b.stars,0)/data.length;
+ avg.innerText="Ø "+avgScore.toFixed(2);
+
+ all.innerHTML="";
+ data.forEach(d=>{
+  all.innerHTML+=`<p>${"★".repeat(d.stars)} - ${d.text}</p>`;
+ });
+}
+
+render();
+</script>
+</body>
+</html>
